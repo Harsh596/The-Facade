@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Facade - Interactive Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* General Body Styling */
+  body {
+    font-family: 'Lato', sans-serif;
+    background: radial-gradient(ellipse at top, #2c3e50, #161a1d);
+    color: #ecf0f1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  /* Main Game Container */
+  .game-container {
+    max-width: 800px;
+    width: 100%;
+    background: rgba(11, 15, 19, 0.8);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Game Title */
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3em;
+    text-align: center;
+    color: #e74c3c;
+    text-shadow: 0 0 5px #e74c3c, 0 0 10px rgba(0,0,0,0.7);
+    margin-top: 0;
+    margin-bottom: 20px;
+  }
+
+  /* Scene Image Styling */
+  #scene-image {
+    display: block;
+    width: 100%;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.7);
+    margin: 0 auto 20px auto;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 1s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Game Text Styling */
+  #game-text {
+    font-family: 'Cormorant Garamond', serif;
+    white-space: pre-wrap;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    line-height: 1.6;
+    min-height: 150px;
+    color: #bdc3c7;
+    border-left: 3px solid #e74c3c;
+    padding-left: 15px;
+  }
+
+  /* Choice Buttons */
+  .choice-btn {
+    display: block;
+    background: linear-gradient(145deg, #34495e, #2c3e50);
+    border: 1px solid #7f8c8d;
+    color: #ecf0f1;
+    padding: 15px 20px;
+    margin: 10px 0;
+    cursor: pointer;
+    border-radius: 8px;
+    width: 100%;
+    text-align: left;
+    font-size: 1.1em;
+    font-family: 'Lato', sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  }
+
+  .choice-btn:hover {
+    background: linear-gradient(145deg, #e74c3c, #c0392b);
+    border-color: #f1c40f;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+  }
+  
+  /* Stats Section */
+  #stats {
+    margin-top: 30px;
+    border-top: 1px solid #34495e;
+    padding-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    gap: 10px;
+  }
+  
+  #stats strong {
+    display: none; /* Title is clear from context */
+  }
+
+  #stats span {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    border: 1px solid #34495e;
+    flex-grow: 1;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>The Facade</h1>
+    <img id="scene-image" src="" alt="Scene Art" />
+    <div id="game-text"></div>
+    <div id="choices"></div>
+    <div id="stats">
+      <strong>Stats:</strong> 
+      <span id="trust-owen">Trust Owen: 50</span>
+      <span id="trust-elena">Trust Elena: 50</span>
+      <span id="supplies">Supplies: Adequate</span>
+      <span id="mystery-meter">Mystery Meter: 0</span>
+    </div>
+</div>
+
+<script>
+(() => {
+  let trustOwen = 50, trustElena = 50, supplies = 100, mysteryMeter = 0;
+
+  const gameText = document.getElementById('game-text');
+  const choicesDiv = document.getElementById('choices');
+  const sceneImg = document.getElementById('scene-image');
+  const trustOwenDisplay = document.getElementById('trust-owen');
+  const trustElenaDisplay = document.getElementById('trust-elena');
+  const suppliesDisplay = document.getElementById('supplies');
+  const mysteryDisplay = document.getElementById('mystery-meter');
+
+  const placeholderUrl = 'https://placehold.co/800x450/1a1a1d/999999?text=Transmission+Lost...';
+
+  const sceneImages = {
+    start: placeholderUrl.replace('Transmission+Lost...', 'The+Journey+Begins'),
+    day1: "https://i.ibb.co/B5BKnQzC/Whats-App-Image-2025-09-27-at-15-34-51-94c978d1.jpg",
+    day2: "https://i.ibb.co/XrgSdrZF/Whats-App-Image-2025-09-27-at-15-21-45-21d1c151.jpg",
+    day3: "https://i.ibb.co/V0w0C1r6/Whats-App-Image-2025-09-27-at-15-21-59-0ab62227.jpg",
+    day3_owen: "https://i.ibb.co/B2sshVv6/Whats-App-Image-2025-09-27-at-15-29-50-f765efbe.jpg",
+    day3_elena: "https://i.ibb.co/DHg5Lzqc/Whats-App-Image-2025-09-27-at-15-27-49-ad739b74.jpg",
+    day3_alone: "https://i.ibb.co/V0Wth5vF/Whats-App-Image-2025-09-27-at-15-31-31-3a0dc65f.jpg",
+    day4: "https://i.ibb.co/qfwyhdx/Whats-App-Image-2025-09-27-at-15-22-16-d420c787.jpg",
+    day4_help: placeholderUrl.replace('Transmission+Lost...', 'A+Cry+For+Help'),
+    day4_leave: placeholderUrl.replace('Transmission+Lost...', 'A+Hard+Decision'),
+    day5: "https://i.ibb.co/M5SZRk83/Whats-App-Image-2025-09-27-at-15-22-33-6a370b5c.jpg",
+    day6: placeholderUrl.replace('Transmission+Lost...', 'The+Bridge+Is+Out'),
+    day6_abandon: placeholderUrl.replace('Transmission+Lost...', 'Lightening+the+Load'),
+    day6_force: placeholderUrl.replace('Transmission+Lost...', 'A+Risky+Crossing'),
+    day6_sacrifice: placeholderUrl.replace('Transmission+Lost...', 'A+Heavy+Sacrifice'),
+    day7: "https://i.ibb.co/tTRggGMS/Whats-App-Image-2025-09-27-at-15-35-09-ab779ed4.jpg",
+    end: placeholderUrl.replace('Transmission+Lost...', 'Sanctuary')
+  };
+
+  const scenes = {
+    start: {
+      text: `
+NARRATOR: The world didn't end in fire, but in a quiet, creeping dread...
+VALD: (Muttering) Come on, you old beast. Don't do this to me now.
+RADIO BROADCAST: ...breakout confirmed... Eretria perimeter... advise extreme caution... they look like us... do not trust...
+NARRATOR: Vald presses his foot down on the accelerator. He just wants to get home.
+      `.trim(),
+      choices: [{ text: "Continue", next: "day1" }]
+    },
+    day1: {
+      text: `
+NARRATOR: The highway was a ghost town... A woman and a little girl stand beside a dead car.
+ELENA: Please! Please, you have to help us!
+VALD: What's the problem?
+ELENA: If there's a "containment breach", run.
+LUMINITA: The trees are watching.
+VALD: Get in. Both of you. But stay in the back and don't touch anything.
+[Trust with Elena established.]
+[Supplies consumption rate increased.]
+      `.trim(),
+      effects: () => {
+        trustElena = Math.min(100, trustElena + 10);
+        supplies = Math.max(0, supplies - 5);
+      },
+      choices: [{ text: "Continue", next: "day2" }]
+    },
+    day2: {
+      text: `
+NARRATOR: The next town was empty. A man with a rifle approaches.
+OWEN: Name's Owen. Heading to the safe zone.
+ELENA: (Whispering) Something's wrong with him.
+VALD: We could use another pair of eyes. Get in.
+[Trust with Owen established.]
+[Elena’s Trust in Vald decreases.]
+      `.trim(),
+      effects: () => {
+        trustOwen = Math.min(100, trustOwen + 10);
+        trustElena = Math.max(0, trustElena - 5);
+      },
+      choices: [{ text: "Continue", next: "day3" }]
+    },
+    day3: {
+      text: `
+NARRATOR: The van needs supplies. Who do you take?
+      `.trim(),
+      choices: [
+        { text: "Take Owen. He's capable.", next: "day3_owen" },
+        { text: "Take Elena. You need her trust.", next: "day3_elena" },
+        { text: "Go alone. Trust no one.", next: "day3_alone" }
+      ]
+    },
+    day3_owen: {
+      text: `
+VALD: Owen, you're with me. Elena, lock the doors. Owen finds parts quickly, and a locked box with a pistol.
+
+[Trust with Owen increases.]
+[Pistol gained.]
+      `.trim(),
+      effects: () => {
+        trustOwen = Math.min(100, trustOwen + 15);
+        supplies = Math.min(100, supplies + 10);
+      },
+      choices: [{ text: "Continue", next: "day4" }]
+    },
+    day3_elena: {
+      text: `
+VALD: Elena, I need your help. She finds a first aid kit.
+[Trust with Elena increases. Medkit gained.]
+      `.trim(),
+      effects: () => {
+        trustElena = Math.min(100, trustElena + 20);
+        supplies = Math.min(100, supplies + 5);
+      },
+      choices: [{ text: "Continue", next: "day4" }]
+    },
+    day3_alone: {
+      text: `
+VALD: I'll go alone. You find the parts, but paranoia grows.
+[Stress increases.]
+      `.trim(),
+      effects: () => {
+        supplies = Math.min(100, supplies + 7);
+      },
+      choices: [{ text: "Continue", next: "day4" }]
+    },
+    day4: {
+      text: `
+NARRATOR: The van stalls. Someone stumbles from the woods crying for help.
+      `.trim(),
+      choices: [
+        { text: "Help the survivor. It's the right thing.", next: "day4_help" },
+        { text: "Leave them. It's too risky.", next: "day4_leave" }
+      ]
+    },
+    day4_help: {
+      text: `
+VALD: I'm not leaving someone to die.
+SURVIVOR: The faces... the wrong faces...
+LUMINITA: He doesn't have a smell, Mama.
+[A Mimic is now aboard.]
+[Paranoia increases.]
+      `.trim(),
+      effects: () => {
+        mysteryMeter += 20;
+      },
+      choices: [{ text: "Continue", next: "day5" }]
+    },
+    day4_leave: {
+      text: `
+VALD: We can't risk it.
+ELENA: How could you?
+[Trust with Elena plummets.]
+[Morale decreases.]
+      `.trim(),
+      effects: () => {
+        trustElena = Math.max(0, trustElena - 20);
+      },
+      choices: [{ text: "Continue", next: "day5" }]
+    },
+    day5: {
+      text: () => {
+        if (trustOwen >= 60) {
+          return `
+OWEN: We need to talk... I was a guard at a black site. The Mimics...
+NARRATOR: Elena hums the radio lullaby perfectly.
+[Mystery Meter increases.]
+[True Survivor ending possible.]
+          `.trim();
+        } else {
+          return `
+VALD finds Owen’s stash and map.
+OWEN: I do what I have to do for survival.
+[Trust with Owen broken.]
+[Betrayal likely.]
+          `.trim();
+        }
+      },
+      effects: () => {
+        if (trustOwen >= 60) {
+          mysteryMeter += 30;
+        } else {
+          trustOwen = 0;
+        }
+      },
+      choices: [{ text: "Continue", next: "day6" }]
+    },
+    day6: {
+      text: `
+The bridge is gone. You must lighten the load.
+      `.trim(),
+      choices: [
+        { text: "Abandon supplies.", next: "day6_abandon" },
+        { text: "Force the crossing.", next: "day6_force" },
+        { text: "A person creates a distraction.", next: "day6_sacrifice" }
+      ]
+    },
+    day6_abandon: {
+      text: `
+ELENA: We can’t lose food!
+OWEN: We can find more.
+[Supplies critically low, but caravan intact.]
+      `.trim(),
+      effects: () => {
+        supplies = Math.max(0, supplies - 40);
+      },
+      choices: [{ text: "Continue", next: "day7" }]
+    },
+    day6_force: {
+      text: `
+VALD forces the crossing.
+[Caravan integrity critically low.]
+      `.trim(),
+      effects: () => {
+        supplies = Math.max(0, supplies - 10);
+      },
+      choices: [{ text: "Continue", next: "day7" }]
+    },
+    day6_sacrifice: {
+      text: `
+One creates a distraction; the rest escape.
+[Morale shattered.]
+      `.trim(),
+      effects: () => {
+        trustOwen = Math.max(0, trustOwen - 20);
+        trustElena = Math.max(0, trustElena - 20);
+      },
+      choices: [{ text: "Continue", next: "day7" }]
+    },
+    day7: {
+      text: `
+NARRATOR: You see the Sanctuary — walled, lit, and welcoming.
+
+SANCTUARY WELCOMER: Welcome! You are safe here.
+Is it truly safe?
+      `.trim(),
+      choices: [{ text: "End Game - See Ending", next: "end" }]
+    },
+    end: {
+      text: () => {
+        if (mysteryMeter > 40) {
+          return "Ending: True Survivor - You revealed the Mimics' secrets and survived.";
+        } else if (trustOwen < 20) {
+          return "Ending: Betrayal - Owen betrayed you.";
+        } else if (supplies < 30) {
+          return "Ending: Struggle - Supplies ran out.";
+        } else {
+          return "Ending: Sanctuary Found - You reached the Sanctuary and hope remains.";
+        }
+      },
+      choices: []
+    }
+  };
+
+  function updateStats() {
+    trustOwenDisplay.textContent = `Trust Owen: ${trustOwen}`;
+    trustElenaDisplay.textContent = `Trust Elena: ${trustElena}`;
+    suppliesDisplay.textContent = `Supplies: ${supplies > 70 ? "Adequate" : supplies > 30 ? "Low" : "Critical"}`;
+    mysteryDisplay.textContent = `Mystery Meter: ${mysteryMeter}`;
+  }
+
+  function renderScene(id) {
+    const scene = scenes[id];
+    if (!scene) {
+      gameText.textContent = "Scene not found.";
+      choicesDiv.innerHTML = "";
+      sceneImg.style.display = "none";
+      return;
+    }
+    choicesDiv.innerHTML = "";
+    
+    // Set image source and fallback
+    sceneImg.src = sceneImages[id] || placeholderUrl;
+    sceneImg.onerror = () => { 
+        sceneImg.src = placeholderUrl; 
+        console.warn(`Image failed to load: ${sceneImages[id]}`);
+    };
+    sceneImg.style.display = "block";
+    sceneImg.style.animation = 'none'; // Reset animation
+    void sceneImg.offsetWidth; // Trigger reflow
+    sceneImg.style.animation = 'fadeIn 1s ease-in-out'; // Re-apply animation
+
+
+    gameText.textContent = typeof scene.text === "function" ? scene.text() : scene.text;
+
+    if (scene.effects) { scene.effects(); }
+
+    scene.choices.forEach(choice => {
+      const btn = document.createElement("button");
+      btn.textContent = choice.text;
+      btn.className = "choice-btn";
+      btn.onclick = () => renderScene(choice.next);
+      choicesDiv.appendChild(btn);
+    });
+
+    updateStats();
+  }
+
+  renderScene('start');
+})();
+</script>
+
+</body>
+</html>
